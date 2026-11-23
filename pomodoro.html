@@ -17,10 +17,10 @@
   html, body { background: var(--bg); height: 100%; }
   body {
     font: 13px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-    color: var(--ink); padding: 4px 8px 0;
+    color: var(--ink); padding: 6px 8px; height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { width: 100%; max-width: 260px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .wrap { width: 100%; max-width: 260px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; }
   .modes { display: flex; gap: 4px; background: var(--rose-soft); padding: 3px; border-radius: 8px; }
   button {
     font: inherit; border: 0; cursor: pointer; border-radius: 6px; color: var(--muted); background: none;
@@ -30,7 +30,8 @@
   button:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
   .modes button { padding: 5px 10px; font-size: 12px; }
   .modes button[aria-pressed="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.06); }
-  .ring { position: relative; width: 150px; height: 150px; }
+  .ring { position: relative; flex: 1; min-height: 0; aspect-ratio: 1; max-width: 200px; }
+  .ring svg { width: 100%; height: 100%; display: block; }
   .ring svg { transform: rotate(-90deg); }
   .ring circle { fill: none; stroke-width: 6; }
   .track { stroke: var(--track); }
@@ -57,7 +58,7 @@
     <button data-mode="long" aria-pressed="false">Long break</button>
   </div>
   <div class="ring">
-    <svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true">
+    <svg viewBox="0 0 150 150" aria-hidden="true">
       <circle class="track" cx="75" cy="75" r="68"/>
       <circle class="bar" id="bar" cx="75" cy="75" r="68"/>
     </svg>

@@ -17,11 +17,11 @@
   html, body { background: var(--bg); height: 100%; }
   body {
     font: 13px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-    color: var(--ink); padding: 4px 8px 0;
+    color: var(--ink); padding: 4px 8px 0; height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  .cal { width: 100%; max-width: 280px; margin: 0 auto; }
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal { width: 100%; max-width: 300px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
   h1 span { color: var(--muted); font-weight: 400; }
   .nav { display: flex; gap: 2px; }
@@ -33,7 +33,7 @@
   button:hover { background: var(--rose-soft); color: var(--ink); }
   button:active { transform: scale(0.95); }
   button:focus-visible { outline: 2px solid var(--rose); outline-offset: 1px; }
-  .grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; text-align: center; }
+  .grid { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto; grid-auto-rows: 1fr; align-items: center; text-align: center; padding-bottom: 4px; }
   .dow { font-size: 11px; color: var(--muted); padding-bottom: 6px; }
   .d { height: 30px; display: grid; place-items: center; font-variant-numeric: tabular-nums; border-radius: 50%; width: 30px; margin: 0 auto; }
   .d.out { color: var(--faint); }
