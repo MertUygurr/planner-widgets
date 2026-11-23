@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Calendar</title>
+<style>
+  :root {
+    --ink: #37302f; --muted: #9a8f8e; --faint: #c9bfbe;
+    --rose: #c9758d; --rose-soft: #f6e3e8; --bg: #ffffff;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #ece6e5; --muted: #a39897; --faint: #5d5453; --rose: #e095aa; --rose-soft: #3a2a2f; --bg: #191919; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); height: 100%; }
+  body {
+    font: 13px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink); display: grid; place-items: center; padding: 12px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .cal { width: 100%; max-width: 280px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  h1 span { color: var(--muted); font-weight: 400; }
+  .nav { display: flex; gap: 2px; }
+  button {
+    font: inherit; color: var(--muted); background: none; border: 0; cursor: pointer;
+    min-width: 28px; height: 28px; border-radius: 6px; padding: 0 6px;
+    transition: background-color 150ms var(--ease), color 150ms var(--ease), transform 120ms var(--ease);
+  }
+  button:hover { background: var(--rose-soft); color: var(--ink); }
+  button:active { transform: scale(0.95); }
+  button:focus-visible { outline: 2px solid var(--rose); outline-offset: 1px; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; text-align: center; }
+  .dow { font-size: 11px; color: var(--muted); padding-bottom: 6px; }
+  .d { height: 30px; display: grid; place-items: center; font-variant-numeric: tabular-nums; border-radius: 50%; width: 30px; margin: 0 auto; }
+  .d.out { color: var(--faint); }
+  .d.wk { color: var(--muted); }
+  .d.today { background: var(--rose); color: #fff; font-weight: 600; }
+  .grid.anim { animation: fade 220ms var(--ease); }
+  @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .grid.anim { animation: none; } button { transition: none; } }
+</style>
+</head>
+<body>
+<div class="cal">
+  <header>
+    <h1 id="title"></h1>
+    <div class="nav">
+      <button id="prev" aria-label="Previous month">&#8249;</button>
+      <button id="today">Today</button>
+      <button id="next" aria-label="Next month">&#8250;</button>
+    </div>
+  </header>
+  <div class="grid" id="grid" role="grid"></div>
+</div>
+<script>
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dows = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const grid = document.getElementById('grid'), title = document.getElementById('title');
+  let view = new Date(); view.setDate(1);
+  function render(animate) {
+    const now = new Date(), y = view.getFullYear(), m = view.getMonth();
+    title.innerHTML = months[m] + ' <span>' + y + '</span>';
+    const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate(), prevDays = new Date(y, m, 0).getDate();
+    let html = dows.map(d => '<div class="dow">' + d + '</div>').join('');
+    const cells = Math.ceil((first + days) / 7) * 7;
+    for (let i = 0; i < cells; i++) {
+      const n = i - first + 1, col = i % 7;
+      let cls = 'd', label = n;
+      if (n < 1) { cls += ' out'; label = prevDays + n; }
+      else if (n > days) { cls += ' out'; label = n - days; }
+      else {
+        if (col === 0 || col === 6) cls += ' wk';
+        if (n === now.getDate() && m === now.getMonth() && y === now.getFullYear()) cls += ' today';
+      }
+      html += '<div class="' + cls + '">' + label + '</div>';
+    }
+    grid.innerHTML = html;
+    if (animate) { grid.classList.remove('anim'); void grid.offsetWidth; grid.classList.add('anim'); }
+  }
+  document.getElementById('prev').onclick = () => { view.setMonth(view.getMonth() - 1); render(true); };
+  document.getElementById('next').onclick = () => { view.setMonth(view.getMonth() + 1); render(true); };
+  document.getElementById('today').onclick = () => { view = new Date(); view.setDate(1); render(true); };
+  render(false);
+  setInterval(() => render(false), 60000);
+</script>
+</body>
+</html>

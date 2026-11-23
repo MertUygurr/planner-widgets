@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus Timer</title>
+<style>
+  :root {
+    --ink: #37302f; --muted: #9a8f8e; --track: #f3e4e8;
+    --rose: #c9758d; --rose-soft: #f6e3e8; --bg: #ffffff;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #ece6e5; --muted: #a39897; --track: #3a2a2f; --rose: #e095aa; --rose-soft: #3a2a2f; --bg: #191919; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); height: 100%; }
+  body {
+    font: 13px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink); display: grid; place-items: center; padding: 12px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: 100%; max-width: 260px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .modes { display: flex; gap: 4px; background: var(--rose-soft); padding: 3px; border-radius: 8px; }
+  button {
+    font: inherit; border: 0; cursor: pointer; border-radius: 6px; color: var(--muted); background: none;
+    transition: background-color 150ms var(--ease), color 150ms var(--ease), transform 120ms var(--ease);
+  }
+  button:active { transform: scale(0.97); }
+  button:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+  .modes button { padding: 5px 10px; font-size: 12px; }
+  .modes button[aria-pressed="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.06); }
+  .ring { position: relative; width: 150px; height: 150px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 6; }
+  .track { stroke: var(--track); }
+  .bar { stroke: var(--rose); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .time { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .time b { font-size: 34px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .time small { color: var(--muted); font-size: 12px; }
+  .controls { display: flex; gap: 8px; }
+  .primary { background: var(--rose); color: #fff; padding: 8px 22px; font-weight: 600; min-height: 36px; }
+  .primary:hover { filter: brightness(0.95); }
+  .ghost { padding: 8px 12px; min-height: 36px; }
+  .ghost:hover { background: var(--rose-soft); color: var(--ink); }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--track); transition: background-color 200ms var(--ease); }
+  .dots i.on { background: var(--rose); }
+  @media (prefers-reduced-motion: reduce) { .bar, button, .dots i { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="modes" role="group" aria-label="Timer mode">
+    <button data-mode="focus" aria-pressed="true">Focus</button>
+    <button data-mode="short" aria-pressed="false">Short break</button>
+    <button data-mode="long" aria-pressed="false">Long break</button>
+  </div>
+  <div class="ring">
+    <svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true">
+      <circle class="track" cx="75" cy="75" r="68"/>
+      <circle class="bar" id="bar" cx="75" cy="75" r="68"/>
+    </svg>
+    <div class="time"><b id="clock" aria-live="off">25:00</b><small id="label">Time to focus</small></div>
+  </div>
+  <div class="controls">
+    <button class="primary" id="start">Start</button>
+    <button class="ghost" id="reset">Reset</button>
+  </div>
+  <div class="dots" aria-label="Focus sessions completed"><i></i><i></i><i></i><i></i></div>
+</div>
+<script>
+  const MODES = { focus: [25, 'Time to focus'], short: [5, 'Take a short break'], long: [15, 'Enjoy a longer rest'] };
+  const C = 2 * Math.PI * 68;
+  const bar = document.getElementById('bar'), clock = document.getElementById('clock'), label = document.getElementById('label');
+  const startBtn = document.getElementById('start'), dots = [...document.querySelectorAll('.dots i')];
+  bar.style.strokeDasharray = C;
+  let mode = 'focus', total = 1500, left = 1500, endAt = null, tick = null, done = 0;
+  const fmt = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  function draw() {
+    clock.textContent = fmt(left);
+    bar.style.strokeDashoffset = C * (1 - left / total);
+    document.title = endAt ? fmt(left) + ' · Focus Timer' : 'Focus Timer';
+    dots.forEach((d, i) => d.classList.toggle('on', i < done % 4 || (done > 0 && done % 4 === 0)));
+  }
+  function setMode(m) {
+    stop(); mode = m; total = left = MODES[m][0] * 60; label.textContent = MODES[m][1];
+    document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+    draw();
+  }
+  function chime() {
+    try {
+      const a = new (window.AudioContext || window.webkitAudioContext)();
+      [660, 880].forEach((f, i) => {
+        const o = a.createOscillator(), g = a.createGain(); o.frequency.value = f; o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, a.currentTime + i * 0.25);
+        g.gain.exponentialRampToValueAtTime(0.15, a.currentTime + i * 0.25 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + i * 0.25 + 0.9);
+        o.connect(g).connect(a.destination); o.start(a.currentTime + i * 0.25); o.stop(a.currentTime + i * 0.25 + 1);
+      });
+    } catch (e) {}
+  }
+  function stop() { clearInterval(tick); tick = null; endAt = null; startBtn.textContent = left < total ? 'Resume' : 'Start'; }
+  function start() {
+    endAt = Date.now() + left * 1000; startBtn.textContent = 'Pause';
+    tick = setInterval(() => {
+      left = Math.max(0, Math.round((endAt - Date.now()) / 1000)); draw();
+      if (left === 0) {
+        chime(); stop();
+        if (mode === 'focus') { done++; setMode(done % 4 === 0 ? 'long' : 'short'); } else setMode('focus');
+      }
+    }, 250);
+  }
+  startBtn.onclick = () => (tick ? stop() : start());
+  document.getElementById('reset').onclick = () => setMode(mode);
+  document.querySelectorAll('.modes button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+  draw();
+</script>
+</body>
+</html>
