@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Water Tracker</title>
+<style>
+  :root {
+    --ink: #37302f; --muted: #8a7f7e; --track: #f3e4e8;
+    --rose: #c9758d; --rose-soft: #f6e3e8; --bg: #ffffff;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #ece6e5; --muted: #a39897; --track: #3a2a2f; --rose: #e095aa; --rose-soft: #3a2a2f; --bg: #191919; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); }
+  body {
+    font: 13px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink); padding: 6px 8px; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 280px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+  .top { display: flex; align-items: baseline; justify-content: space-between; }
+  .top b { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .top small { color: var(--muted); font-size: 12px; }
+  .glasses { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  button {
+    font: inherit; border: 0; cursor: pointer; background: none; color: var(--muted);
+    transition: transform 120ms var(--ease), background-color 150ms var(--ease), color 150ms var(--ease);
+  }
+  button:active { transform: scale(0.97); }
+  button:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; border-radius: 8px; }
+  .glass { aspect-ratio: 3 / 4; min-height: 44px; border-radius: 6px 6px 12px 12px; background: var(--rose-soft); position: relative; overflow: hidden; }
+  .glass::after {
+    content: ""; position: absolute; inset: auto 0 0 0; height: 100%; background: var(--rose);
+    transform: translateY(100%); transition: transform 300ms var(--ease);
+  }
+  .glass[aria-pressed="true"]::after { transform: translateY(18%); }
+  .glass:hover { background: var(--track); }
+  .bottom { display: flex; justify-content: space-between; align-items: center; }
+  .msg { color: var(--muted); font-size: 12px; }
+  .reset { padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+  .reset:hover { background: var(--rose-soft); color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .glass::after, button { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><b id="count">0 / 8</b><small>glasses today</small></div>
+  <div class="glasses" id="glasses" role="group" aria-label="Glasses of water"></div>
+  <div class="bottom"><span class="msg" id="msg">Tap a glass when you drink one.</span><button class="reset" id="reset">Reset</button></div>
+</div>
+<script>
+  const GOAL = 8, key = 'water-' + new Date().toISOString().slice(0, 10);
+  const box = document.getElementById('glasses'), count = document.getElementById('count'), msg = document.getElementById('msg');
+  let n = 0; try { n = +localStorage.getItem(key) || 0; } catch (e) {}
+  const glasses = [...Array(GOAL)].map((_, i) => {
+    const b = document.createElement('button'); b.className = 'glass';
+    b.setAttribute('aria-label', 'Glass ' + (i + 1));
+    b.onclick = () => { n = (i + 1 === n) ? i : i + 1; render(); };
+    box.appendChild(b); return b;
+  });
+  document.getElementById('reset').onclick = () => { n = 0; render(); };
+  function render() {
+    glasses.forEach((g, i) => g.setAttribute('aria-pressed', i < n));
+    count.textContent = n + ' / ' + GOAL;
+    msg.textContent = n >= GOAL ? 'Goal reached. Well done.' : n ? (GOAL - n) + ' more to go.' : 'Tap a glass when you drink one.';
+    try { localStorage.setItem(key, n); } catch (e) {}
+  }
+  render();
+</script>
+</body>
+</html>
