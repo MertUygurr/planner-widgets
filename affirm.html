@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Affirmation</title>
+<style>
+  :root { --ink: #37302f; --muted: #8a7f7e; --rose: #c9758d; --rose-soft: #f6e3e8; --bg: #ffffff; --ease: cubic-bezier(0.23, 1, 0.32, 1); }
+  @media (prefers-color-scheme: dark) { :root { --ink: #ece6e5; --muted: #a39897; --rose: #e095aa; --rose-soft: #3a2a2f; --bg: #191919; } }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); }
+  body { font: 13px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--ink); padding: 6px 8px; -webkit-font-smoothing: antialiased; }
+  .card { max-width: 300px; margin: 0 auto; background: var(--rose-soft); border-radius: 12px; padding: 16px 16px 12px; text-align: center; }
+  .mark { color: var(--rose); font-size: 14px; }
+  q { display: block; quotes: none; font-family: Georgia, "Times New Roman", serif; font-size: 17px; line-height: 1.35;
+      font-style: italic; margin: 6px 0 10px; text-wrap: balance; transition: opacity 200ms var(--ease); }
+  .foot { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12px; }
+  button { font: inherit; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 6px;
+           transition: transform 120ms var(--ease), background-color 150ms var(--ease); }
+  button:hover { background: var(--bg); color: var(--ink); }
+  button:active { transform: scale(0.97); }
+  button:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { q, button { transition: none; } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="mark">✦</div>
+  <q id="q"></q>
+  <div class="foot"><span id="d"></span><button id="next">Another one</button></div>
+</div>
+<script>
+  const A = [
+    'I am allowed to rest.', 'I am doing better than I think.', 'Small steps still move me forward.',
+    'I choose peace over worry.', 'My body is my home and I care for it.', 'I am enough, just as I am.',
+    'Today I will be gentle with myself.', 'I let go of what I cannot control.', 'Good things are coming to me.',
+    'I trust the timing of my life.', 'My feelings are valid.', 'I am proud of how far I have come.',
+    'I breathe in calm and breathe out tension.', 'I deserve the love I give to others.', 'I am growing at my own pace.',
+    'Joy is found in simple moments.', 'I make space for what matters.', 'I am safe, I am calm, I am here.',
+    'Every day is a fresh start.', 'I treat myself with kindness.', 'My energy is precious and I protect it.',
+    'I am becoming the woman I want to be.', 'It is okay to slow down.', 'I am thankful for this moment.',
+    'I believe in myself.', 'Rest is productive too.', 'I radiate calm and confidence.',
+    'I celebrate my small wins.', 'I listen to what my body needs.', 'Softness is my strength.', 'I am open to new beginnings.'];
+  const now = new Date(), day = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+  let i = day % A.length; const q = document.getElementById('q');
+  document.getElementById('d').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const show = () => { q.style.opacity = 0; setTimeout(() => { q.textContent = A[i]; q.style.opacity = 1; }, 120); };
+  q.textContent = A[i];
+  document.getElementById('next').onclick = () => { i = (i + 1) % A.length; show(); };
+</script>
+</body>
+</html>

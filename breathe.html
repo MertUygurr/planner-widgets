@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Breathe</title>
+<style>
+  :root {
+    --ink: #37302f; --muted: #8a7f7e; --rose: #c9758d; --rose-soft: #f6e3e8; --rose-mid: #ecc4cf; --bg: #ffffff;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #ece6e5; --muted: #a39897; --rose: #e095aa; --rose-soft: #3a2a2f; --rose-mid: #5a3a44; --bg: #191919; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { background: var(--bg); }
+  body {
+    font: 13px/1.4 ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink); padding: 8px; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 280px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .stage { width: 150px; height: 150px; display: grid; place-items: center; position: relative; }
+  .ring { position: absolute; inset: 0; border-radius: 50%; background: var(--rose-soft); }
+  .ball {
+    width: 150px; height: 150px; border-radius: 50%; background: var(--rose-mid);
+    transform: scale(0.45); transition-property: transform; transition-timing-function: ease-in-out;
+    display: grid; place-items: center;
+  }
+  .word { position: absolute; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+  .count { position: absolute; top: 58%; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  button {
+    font: inherit; border: 0; cursor: pointer; padding: 6px 14px; border-radius: 999px; min-height: 32px;
+    background: var(--rose); color: #fff; font-weight: 600;
+    transition: transform 120ms var(--ease), opacity 150ms var(--ease);
+  }
+  button.ghost { background: none; color: var(--muted); font-weight: 400; }
+  button:hover { opacity: 0.9; }
+  button:active { transform: scale(0.97); }
+  button:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+  .hint { color: var(--muted); font-size: 12px; }
+  @media (prefers-reduced-motion: reduce) { .ball { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage" aria-live="polite">
+    <div class="ring"></div>
+    <div class="ball" id="ball"></div>
+    <span class="word" id="word">Breathe</span>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="row">
+    <button id="go">Start</button>
+    <span class="hint" id="hint">4 in, 4 hold, 4 out</span>
+  </div>
+</div>
+<script>
+  const ball = document.getElementById('ball'), word = document.getElementById('word'),
+        count = document.getElementById('count'), go = document.getElementById('go'), hint = document.getElementById('hint');
+  const steps = [['Breathe in', 1], ['Hold', 1], ['Breathe out', 0.45], ['Hold', 0.45]];
+  let timer = null, tick = null, rounds = 0;
+  function step(i) {
+    const [label, size] = steps[i];
+    ball.style.transitionDuration = (label === 'Hold' ? 0 : 4) + 's';
+    ball.style.transform = 'scale(' + size + ')';
+    word.textContent = label;
+    let s = 4; count.textContent = s;
+    clearInterval(tick); tick = setInterval(() => { s--; count.textContent = s > 0 ? s : ''; }, 1000);
+    if (i === 3) { rounds++; hint.textContent = rounds + (rounds === 1 ? ' round' : ' rounds'); }
+    timer = setTimeout(() => step((i + 1) % 4), 4000);
+  }
+  function stop() {
+    clearTimeout(timer); clearInterval(tick); timer = null;
+    ball.style.transitionDuration = '1s'; ball.style.transform = 'scale(0.45)';
+    word.textContent = rounds ? 'Well done' : 'Breathe'; count.textContent = '';
+    go.textContent = 'Start'; go.className = '';
+  }
+  go.onclick = () => {
+    if (timer) return stop();
+    rounds = 0; hint.textContent = '4 in, 4 hold, 4 out';
+    go.textContent = 'Stop'; go.className = 'ghost'; step(0);
+  };
+</script>
+</body>
+</html>
