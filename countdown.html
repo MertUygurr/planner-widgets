@@ -13,31 +13,40 @@
   * { box-sizing:border-box; margin:0; }
   html,body { background:var(--bg); }
   body { font:13px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); padding:6px 8px; -webkit-font-smoothing:antialiased; }
-  .list { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
-  .ev { position:relative; background:var(--soft); border-radius:14px; padding:14px 14px 12px; min-height:104px; display:flex; flex-direction:column; overflow:hidden; }
-  .ev .emo { font-size:20px; line-height:1; }
-  .ev .n { font-family:Georgia,"Times New Roman",serif; font-size:34px; line-height:1; margin-top:10px; color:var(--accent); font-variant-numeric:tabular-nums; }
-  .ev .n small { font-family:ui-sans-serif,-apple-system,"Segoe UI",sans-serif; font-size:12px; color:var(--muted); margin-left:4px; }
-  .ev .t { margin-top:6px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .ev.today .n { font-size:22px; }
+  html,body { height:100%; }
+  body { display:flex; flex-direction:column; }
+  .wrap { flex:1; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:10px; min-height:0; }
+  .big { position:relative; background:var(--soft); border-radius:16px; padding:22px 24px; display:flex; flex-direction:column; justify-content:center; overflow:hidden; }
+  .big .emo { font-size:30px; line-height:1; }
+  .big .n { font-family:Georgia,"Times New Roman",serif; font-size:clamp(48px,9vw,84px); line-height:1; color:var(--accent); margin-top:12px; font-variant-numeric:tabular-nums; }
+  .big .n small { font-family:ui-sans-serif,-apple-system,"Segoe UI",sans-serif; font-size:15px; color:var(--muted); margin-left:6px; }
+  .big .t { margin-top:8px; font-size:16px; }
+  .big .when { margin-top:2px; font-size:12px; color:var(--muted); }
+  .rest { display:flex; flex-direction:column; gap:8px; min-height:0; overflow:auto; }
+  .row2 { position:relative; display:flex; align-items:center; gap:12px; background:var(--soft); border-radius:12px; padding:10px 14px; overflow:hidden; }
+  .row2 .emo { font-size:18px; }
+  .row2 .t { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row2 .n { font-family:Georgia,"Times New Roman",serif; font-size:22px; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .row2 .n small { font-family:ui-sans-serif,-apple-system,"Segoe UI",sans-serif; font-size:11px; color:var(--muted); margin-left:3px; }
+  @media (max-width:520px) { .wrap { grid-template-columns:1fr; } .big { padding:16px; } }
   .foot { display:flex; justify-content:flex-end; margin-top:6px; }
   button { font:inherit; font-size:12px; border:0; background:none; color:var(--muted); cursor:pointer; padding:4px 8px; border-radius:6px; transition:transform 120ms var(--ease), background-color 150ms var(--ease); }
   button:hover { background:var(--soft); color:var(--ink); }
   button:active { transform:scale(0.97); }
   button:focus-visible, input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-  .edit { background:var(--soft); border-radius:14px; padding:12px; }
+  .edit { background:var(--soft); border-radius:14px; padding:12px; overflow:auto; }
   .row { display:flex; gap:6px; margin-bottom:6px; }
   input { font:inherit; font-size:13px; padding:6px 8px; border-radius:8px; border:1px solid color-mix(in srgb,var(--accent) 35%,transparent); background:var(--bg); color:var(--ink); min-width:0; }
   input.e { width:44px; text-align:center; } input.t { flex:1; } input.d { width:140px; }
   .x { color:var(--muted); }
   .save { background:var(--accent); color:#fff; } .save:hover { background:var(--accent); color:#fff; opacity:.9; }
   .confetti { position:absolute; width:6px; height:9px; top:-10px; animation:drop 1.6s var(--ease) forwards; }
-  @keyframes drop { to { transform:translateY(130px) rotate(540deg); opacity:0; } }
+  @keyframes drop { to { transform:translateY(300px) rotate(540deg); opacity:0; } }
   @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
 <script>
 const q = new URLSearchParams(location.search);
 document.body.dataset.theme = q.get('theme') || 'blush';
@@ -59,13 +68,16 @@ const app = document.getElementById('app');
 
 function view() {
   const list = evs.filter(e => e.t && e.d && days(e.d) >= 0).sort((a,b) => days(a.d) - days(b.d));
-  app.innerHTML = `<div class="list">${list.map(e => { const n = days(e.d);
-    return `<div class="ev${n===0?' today':''}"><div class="emo">${esc(e.e||'✨')}</div>
-      <div class="n">${n===0 ? 'Today! 🎉' : n + `<small>${n===1?'day':'days'}</small>`}</div><div class="t">${esc(e.t)}</div></div>`; }).join('')
-    || '<div class="ev"><div class="t">Add something to look forward to ✨</div></div>'}</div>
+  const num = n => n === 0 ? 'Today! 🎉' : n + `<small>${n === 1 ? 'day' : 'days'}</small>`;
+  const when = d => { const [y,mo,da] = d.split('-').map(Number); return new Date(y,mo-1,da).toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric'}); };
+  const [f, ...rest] = list;
+  app.innerHTML = `<div class="wrap">${f ? `<div class="big${days(f.d)===0?' today':''}"><div class="emo">${esc(f.e||'✨')}</div>
+      <div class="n">${num(days(f.d))}</div><div class="t">until ${esc(f.t)}</div><div class="when">${when(f.d)}</div></div>`
+      : '<div class="big"><div class="t">Add something to look forward to ✨</div></div>'}
+    <div class="rest">${rest.slice(0,5).map(e => `<div class="row2${days(e.d)===0?' today':''}"><span class="emo">${esc(e.e||'✨')}</span><span class="t">${esc(e.t)}</span><span class="n">${num(days(e.d))}</span></div>`).join('')}</div></div>
     <div class="foot"><button id="ed" type="button">✎ Edit countdowns</button></div>`;
   document.getElementById('ed').onclick = edit;
-  app.querySelectorAll('.ev.today').forEach(burst);
+  app.querySelectorAll('.today').forEach(burst);
 }
 function burst(el) {
   const c = getComputedStyle(document.body).getPropertyValue('--accent');

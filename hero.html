@@ -11,14 +11,14 @@
   body[data-theme=lavender] { --accent:#8f7cc0; --soft:#ece6f6; }
   @media (prefers-color-scheme: dark) { :root { --ink:#ece6e5; --muted:#a39897; --bg:#191919; } }
   * { box-sizing:border-box; margin:0; }
-  html,body { background:var(--bg); }
+  html,body { background:var(--bg); height:100%; }
   body { font:13px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); padding:6px 8px; -webkit-font-smoothing:antialiased; }
-  .card { display:flex; align-items:stretch; gap:18px; background:var(--soft); border-radius:16px; padding:18px 18px 18px 24px; min-height:176px; overflow:hidden; }
+  .card { display:flex; align-items:stretch; gap:18px; background:var(--soft); border-radius:16px; padding:20px 20px 20px 32px; height:calc(100vh - 12px); min-height:176px; overflow:hidden; }
   .text { flex:1; display:flex; flex-direction:column; justify-content:center; min-width:0; }
-  .hi { font-family:Georgia,"Times New Roman",serif; font-size:30px; line-height:1.15; letter-spacing:-0.01em; text-wrap:balance; }
+  .hi { font-family:Georgia,"Times New Roman",serif; font-size:clamp(28px,4.2vw,42px); line-height:1.15; letter-spacing:-0.01em; text-wrap:balance; }
   .hi em { font-style:italic; color:var(--accent); }
-  .date { margin-top:6px; color:var(--muted); font-size:13px; }
-  .year { margin-top:14px; max-width:260px; }
+  .date { margin-top:8px; color:var(--muted); font-size:14px; }
+  .year { margin-top:18px; max-width:300px; }
   .bar { height:6px; border-radius:6px; background:color-mix(in srgb,var(--accent) 18%,transparent); overflow:hidden; }
   .bar i { display:block; height:100%; background:var(--accent); border-radius:6px; transform-origin:left; animation:grow 900ms var(--ease) both; }
   @keyframes grow { from { transform:scaleX(0); } }
@@ -27,17 +27,17 @@
   .name:hover { color:var(--ink); }
   .name:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
   input { font:inherit; font-size:13px; padding:6px 10px; border-radius:8px; border:1px solid color-mix(in srgb,var(--accent) 40%,transparent); background:var(--bg); color:var(--ink); width:180px; margin-top:10px; }
-  .scene { position:relative; width:260px; flex:none; border-radius:12px; overflow:hidden; }
+  .scene { position:relative; width:min(46%,420px); flex:none; border-radius:12px; overflow:hidden; }
   .scene svg { display:block; width:100%; height:100%; }
   .fx { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
   .fx span { position:absolute; top:-12px; font-size:11px; opacity:.85; animation:fall linear infinite; }
-  @keyframes fall { to { transform:translate(18px,200px) rotate(200deg); } }
+  @keyframes fall { to { transform:translate(24px,340px) rotate(220deg); } }
   .steam path { animation:steam 3.2s ease-in-out infinite; opacity:0; }
   .steam path:nth-child(2) { animation-delay:1.1s; } .steam path:nth-child(3) { animation-delay:2.1s; }
   @keyframes steam { 0% { opacity:0; transform:translateY(4px); } 40% { opacity:.55; } 100% { opacity:0; transform:translateY(-10px); } }
   .twinkle { animation:tw 2.4s ease-in-out infinite; } .twinkle:nth-child(2n) { animation-delay:1.2s; }
   @keyframes tw { 50% { opacity:.25; } }
-  @media (max-width:430px) { .card { flex-direction:column-reverse; padding:16px; } .scene { width:100%; height:120px; } .hi { font-size:24px; } }
+  @media (max-width:520px) { .card { flex-direction:column-reverse; padding:16px; gap:12px; } .scene { width:100%; flex:1; } .hi { font-size:24px; } .year { margin-top:10px; } }
   @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; } }
 </style>
 </head>
