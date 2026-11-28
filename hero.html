@@ -85,8 +85,8 @@ render();
 const orb = document.getElementById('orb'), dark = part === 'evening' || part === 'night';
 const S = 'min(30vh, 22vw)';
 if (!dark) {
-  const sun = part === 'morning' ? '#ffd9a8' : '#fff4d6';
-  orb.style.cssText = `width:${S};height:${S};top:${part === 'morning' ? '24%' : '12%'};background:radial-gradient(circle,${sun} 0 38%,color-mix(in srgb,${sun} 45%,transparent) 39%,transparent 70%);`;
+  const sun = part === 'morning' ? '#ffc98a' : '#ffe39a';
+  orb.style.cssText = `width:${S};height:${S};top:${part === 'morning' ? '24%' : '12%'};background:radial-gradient(circle,${sun} 0 30%,color-mix(in srgb,${sun} 40%,transparent) 32%,transparent 68%);`;
 } else {
   const syn = 29.530588853, p = (((now - Date.UTC(2000, 0, 6, 18, 14)) / 864e5) % syn + syn) % syn / syn;
   const r = 40, rx = r * Math.abs(Math.cos(2 * Math.PI * p)), wax = p < 0.5;
