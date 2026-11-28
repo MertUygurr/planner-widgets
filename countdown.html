@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Countdown</title>
+<style>
+  :root { --ink:#37302f; --muted:#8a7f7e; --accent:#c9758d; --soft:#f6e3e8; --bg:#ffffff; --ease:cubic-bezier(0.23,1,0.32,1); }
+  body[data-theme=latte]    { --accent:#a47e62; --soft:#f1e6dc; }
+  body[data-theme=sky]      { --accent:#6f93bf; --soft:#e3edf7; }
+  body[data-theme=lavender] { --accent:#8f7cc0; --soft:#ece6f6; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#ece6e5; --muted:#a39897; --bg:#191919; } }
+  * { box-sizing:border-box; margin:0; }
+  html,body { background:var(--bg); }
+  body { font:13px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); padding:6px 8px; -webkit-font-smoothing:antialiased; }
+  .list { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .ev { position:relative; background:var(--soft); border-radius:14px; padding:14px 14px 12px; min-height:104px; display:flex; flex-direction:column; overflow:hidden; }
+  .ev .emo { font-size:20px; line-height:1; }
+  .ev .n { font-family:Georgia,"Times New Roman",serif; font-size:34px; line-height:1; margin-top:10px; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .ev .n small { font-family:ui-sans-serif,-apple-system,"Segoe UI",sans-serif; font-size:12px; color:var(--muted); margin-left:4px; }
+  .ev .t { margin-top:6px; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ev.today .n { font-size:22px; }
+  .foot { display:flex; justify-content:flex-end; margin-top:6px; }
+  button { font:inherit; font-size:12px; border:0; background:none; color:var(--muted); cursor:pointer; padding:4px 8px; border-radius:6px; transition:transform 120ms var(--ease), background-color 150ms var(--ease); }
+  button:hover { background:var(--soft); color:var(--ink); }
+  button:active { transform:scale(0.97); }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .edit { background:var(--soft); border-radius:14px; padding:12px; }
+  .row { display:flex; gap:6px; margin-bottom:6px; }
+  input { font:inherit; font-size:13px; padding:6px 8px; border-radius:8px; border:1px solid color-mix(in srgb,var(--accent) 35%,transparent); background:var(--bg); color:var(--ink); min-width:0; }
+  input.e { width:44px; text-align:center; } input.t { flex:1; } input.d { width:140px; }
+  .x { color:var(--muted); }
+  .save { background:var(--accent); color:#fff; } .save:hover { background:var(--accent); color:#fff; opacity:.9; }
+  .confetti { position:absolute; width:6px; height:9px; top:-10px; animation:drop 1.6s var(--ease) forwards; }
+  @keyframes drop { to { transform:translateY(130px) rotate(540deg); opacity:0; } }
+  @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const q = new URLSearchParams(location.search);
+document.body.dataset.theme = q.get('theme') || 'blush';
+const KEY = 'planner-countdown';
+const today = new Date(); today.setHours(0,0,0,0);
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const nextOf = (mo, da) => { const d = new Date(today.getFullYear(), mo, da); if (d < today) d.setFullYear(d.getFullYear()+1); return iso(d); };
+const plus = n => { const d = new Date(today); d.setDate(d.getDate()+n); return iso(d); };
+const DEFAULT = [
+  { e:'🌴', t:'Summer trip', d:plus(75) },
+  { e:'🎂', t:'My birthday', d:plus(140) },
+  { e:'🎄', t:'Christmas', d:nextOf(11,25) },
+  { e:'🎆', t:'New Year', d:nextOf(0,1) },
+];
+let evs; try { evs = JSON.parse(localStorage.getItem(KEY)) || DEFAULT; } catch { evs = DEFAULT; }
+const days = s => { const [y,mo,da] = s.split('-').map(Number); return Math.round((new Date(y,mo-1,da) - today) / 864e5); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const app = document.getElementById('app');
+
+function view() {
+  const list = evs.filter(e => e.t && e.d && days(e.d) >= 0).sort((a,b) => days(a.d) - days(b.d));
+  app.innerHTML = `<div class="list">${list.map(e => { const n = days(e.d);
+    return `<div class="ev${n===0?' today':''}"><div class="emo">${esc(e.e||'✨')}</div>
+      <div class="n">${n===0 ? 'Today! 🎉' : n + `<small>${n===1?'day':'days'}</small>`}</div><div class="t">${esc(e.t)}</div></div>`; }).join('')
+    || '<div class="ev"><div class="t">Add something to look forward to ✨</div></div>'}</div>
+    <div class="foot"><button id="ed" type="button">✎ Edit countdowns</button></div>`;
+  document.getElementById('ed').onclick = edit;
+  app.querySelectorAll('.ev.today').forEach(burst);
+}
+function burst(el) {
+  const c = getComputedStyle(document.body).getPropertyValue('--accent');
+  for (let i = 0; i < 18; i++) { const p = document.createElement('i'); p.className = 'confetti';
+    p.style.left = Math.random()*100 + '%'; p.style.background = [c,'#ffd27a','#8fb39a','#b9a3d6'][i%4];
+    p.style.animationDelay = Math.random()*0.5 + 's'; el.appendChild(p); }
+}
+function edit() {
+  const rows = [...evs, {e:'',t:'',d:''}];
+  app.innerHTML = `<div class="edit">${rows.map((e,i) => `<div class="row" data-i="${i}">
+    <input class="e" value="${esc(e.e)}" placeholder="✨" maxlength="4" aria-label="Emoji">
+    <input class="t" value="${esc(e.t)}" placeholder="What are you counting down to?" maxlength="40" aria-label="Name">
+    <input class="d" type="date" value="${esc(e.d)}" aria-label="Date">
+    <button class="x" type="button" aria-label="Remove">✕</button></div>`).join('')}
+    <div class="foot"><button id="cancel" type="button">Cancel</button><button class="save" id="save" type="button">Save</button></div></div>`;
+  app.querySelectorAll('.x').forEach(b => b.onclick = () => b.parentElement.remove());
+  document.getElementById('cancel').onclick = view;
+  document.getElementById('save').onclick = () => {
+    evs = [...app.querySelectorAll('.row')].map(r => ({ e:r.querySelector('.e').value.trim(), t:r.querySelector('.t').value.trim(), d:r.querySelector('.d').value }))
+      .filter(e => e.t && e.d).slice(0, 8);
+    localStorage.setItem(KEY, JSON.stringify(evs)); view();
+  };
+}
+view();
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Year in Pixels</title>
+<style>
+  :root { --ink:#37302f; --muted:#8a7f7e; --accent:#c9758d; --soft:#f6e3e8; --bg:#ffffff; --empty:#f3eeec; --ease:cubic-bezier(0.23,1,0.32,1);
+          --m1:#e8879f; --m2:#f2b8a2; --m3:#f3dc8c; --m4:#9cc5a9; --m5:#9db8de; --m6:#b6a3d8; }
+  body[data-theme=latte]    { --accent:#a47e62; --soft:#f1e6dc; }
+  body[data-theme=sky]      { --accent:#6f93bf; --soft:#e3edf7; }
+  body[data-theme=lavender] { --accent:#8f7cc0; --soft:#ece6f6; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#ece6e5; --muted:#a39897; --bg:#191919; --empty:#2a2526; } }
+  * { box-sizing:border-box; margin:0; }
+  html,body { background:var(--bg); }
+  body { font:12px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); padding:6px 8px; -webkit-font-smoothing:antialiased; }
+  .head, .legend { max-width:760px; }
+  .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .head h1 { font:400 20px/1.2 Georgia,"Times New Roman",serif; }
+  .head h1 em { color:var(--accent); }
+  .nav button { font:inherit; border:0; background:none; color:var(--muted); cursor:pointer; padding:2px 8px; border-radius:6px; font-size:14px; }
+  .nav button:hover { background:var(--soft); color:var(--ink); }
+  .grid { display:grid; grid-template-columns:26px repeat(31,1fr); gap:3px; max-width:760px; }
+  .ml { color:var(--muted); font-size:10px; line-height:1; align-self:center; }
+  .dn { text-align:center; color:var(--muted); font-size:9px; padding-bottom:1px; }
+    .px { aspect-ratio:1; width:100%; min-width:0; border-radius:3px; background:var(--empty); border:0; padding:0; cursor:pointer; transition:transform 120ms var(--ease); }
+  .px:hover { transform:scale(1.25); }
+  .px.no { visibility:hidden; cursor:default; }
+  .px.today { outline:1.5px solid var(--ink); outline-offset:1px; }
+  .px.fut { opacity:.45; cursor:default; } .px.fut:hover { transform:none; }
+  .px:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .legend { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:10px; color:var(--muted); }
+  .legend span { display:inline-flex; align-items:center; gap:5px; }
+  .legend i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .pick { position:fixed; background:var(--bg); border-radius:12px; padding:8px; box-shadow:0 6px 24px rgba(0,0,0,.14); display:flex; flex-wrap:wrap; width:244px; gap:6px; z-index:9; animation:pop 160ms var(--ease); }
+  @keyframes pop { from { transform:scale(.92); opacity:0; } }
+  .pick button { width:26px; height:26px; border-radius:8px; border:0; cursor:pointer; font-size:13px; }
+  .pick .clr { background:var(--empty); color:var(--muted); }
+  .pick small { flex-basis:100%; color:var(--muted); font-size:11px; margin:0 2px 2px; }
+  @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="head"><h1>Year in <em>Pixels</em></h1><div class="nav"><button id="prev" aria-label="Previous year">‹</button><span id="yr"></span><button id="next" aria-label="Next year">›</button></div></div>
+<div class="grid" id="grid"></div>
+<div class="legend" id="legend"></div>
+<script>
+const q = new URLSearchParams(location.search);
+document.body.dataset.theme = q.get('theme') || 'blush';
+const MOODS = [['Amazing','--m1','😍'],['Happy','--m2','😊'],['Okay','--m3','😐'],['Calm','--m4','😌'],['Low','--m5','😔'],['Stressed','--m6','😣']];
+const now = new Date(); now.setHours(0,0,0,0);
+let year = Number(q.get('year')) || now.getFullYear();
+const key = () => 'planner-pixels-' + year;
+const load = () => { try { return JSON.parse(localStorage.getItem(key())) || {}; } catch { return {}; } };
+const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const grid = document.getElementById('grid');
+function draw() {
+  const data = load();
+  document.getElementById('yr').textContent = year;
+  let h = '<div></div>';
+  for (let d = 1; d <= 31; d++) h += `<div class="dn">${d === 1 || d % 5 === 0 ? d : ''}</div>`;
+  for (let mo = 0; mo < 12; mo++) {
+    h += `<div class="ml">${M[mo]}</div>`;
+    for (let d = 1; d <= 31; d++) {
+      const dt = new Date(year, mo, d);
+      if (dt.getMonth() !== mo) { h += '<span class="px no"></span>'; continue; }
+      const k = `${mo+1}-${d}`, v = data[k], fut = dt > now, t = +dt === +now;
+      h += `<button class="px${fut?' fut':''}${t?' today':''}" data-k="${k}" ${fut?'disabled':''} style="${v!=null?`background:var(${MOODS[v][1]})`:''}"
+        aria-label="${dt.toDateString()}${v!=null?': '+MOODS[v][0]:''}"></button>`;
+    }
+  }
+  grid.innerHTML = h;
+  const counts = MOODS.map((_, i) => Object.values(data).filter(v => v === i).length);
+  document.getElementById('legend').innerHTML = MOODS.map(([n,c],i) => `<span><i style="background:var(${c})"></i>${n}${counts[i]?' · '+counts[i]:''}</span>`).join('');
+}
+let pick;
+grid.onclick = e => {
+  const b = e.target.closest('.px'); if (!b || b.disabled || b.classList.contains('no')) return;
+  pick?.remove();
+  const r = b.getBoundingClientRect(), [mo, d] = b.dataset.k.split('-').map(Number);
+  pick = document.createElement('div'); pick.className = 'pick';
+  pick.innerHTML = `<small>${new Date(year, mo-1, d).toLocaleDateString('en-US',{month:'short',day:'numeric'})}: how did it feel?</small>` +
+    MOODS.map(([n,c,em],i) => `<button data-v="${i}" title="${n}" style="background:var(${c})">${em}</button>`).join('') + '<button class="clr" data-v="x" title="Clear">✕</button>';
+  document.body.appendChild(pick);
+  const w = pick.offsetWidth;
+  pick.style.left = Math.max(6, Math.min(innerWidth - w - 6, r.left - w/2)) + 'px';
+  pick.style.top = Math.min(innerHeight - 70, r.bottom + 6) + 'px';
+  pick.onclick = ev => { const v = ev.target.closest('button')?.dataset.v; if (v == null) return;
+    const data = load(); v === 'x' ? delete data[b.dataset.k] : data[b.dataset.k] = Number(v);
+    localStorage.setItem(key(), JSON.stringify(data)); pick.remove(); pick = null; draw(); };
+};
+document.addEventListener('click', e => { if (pick && !e.target.closest('.pick') && !e.target.closest('.px')) { pick.remove(); pick = null; } });
+document.getElementById('prev').onclick = () => { year--; draw(); };
+document.getElementById('next').onclick = () => { year++; draw(); };
+draw();
+</script>
+</body>
+</html>

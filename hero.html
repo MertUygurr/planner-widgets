@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hello</title>
+<style>
+  :root { --ink:#37302f; --muted:#8a7f7e; --accent:#c9758d; --soft:#f6e3e8; --bg:#ffffff; --ease:cubic-bezier(0.23,1,0.32,1); }
+  body[data-theme=latte]    { --accent:#a47e62; --soft:#f1e6dc; }
+  body[data-theme=sky]      { --accent:#6f93bf; --soft:#e3edf7; }
+  body[data-theme=lavender] { --accent:#8f7cc0; --soft:#ece6f6; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#ece6e5; --muted:#a39897; --bg:#191919; } }
+  * { box-sizing:border-box; margin:0; }
+  html,body { background:var(--bg); }
+  body { font:13px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); padding:6px 8px; -webkit-font-smoothing:antialiased; }
+  .card { max-width:760px; display:flex; align-items:stretch; gap:18px; background:var(--soft); border-radius:16px; padding:18px 18px 18px 24px; min-height:176px; overflow:hidden; }
+  .text { flex:1; display:flex; flex-direction:column; justify-content:center; min-width:0; }
+  .hi { font-family:Georgia,"Times New Roman",serif; font-size:30px; line-height:1.15; letter-spacing:-0.01em; text-wrap:balance; }
+  .hi em { font-style:italic; color:var(--accent); }
+  .date { margin-top:6px; color:var(--muted); font-size:13px; }
+  .year { margin-top:14px; max-width:260px; }
+  .bar { height:6px; border-radius:6px; background:color-mix(in srgb,var(--accent) 18%,transparent); overflow:hidden; }
+  .bar i { display:block; height:100%; background:var(--accent); border-radius:6px; transform-origin:left; animation:grow 900ms var(--ease) both; }
+  @keyframes grow { from { transform:scaleX(0); } }
+  .year small { display:block; margin-top:6px; color:var(--muted); font-size:12px; }
+  .name { margin-top:10px; align-self:flex-start; font:inherit; font-size:12px; color:var(--muted); background:none; border:0; padding:4px 0; cursor:pointer; }
+  .name:hover { color:var(--ink); }
+  .name:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+  input { font:inherit; font-size:13px; padding:6px 10px; border-radius:8px; border:1px solid color-mix(in srgb,var(--accent) 40%,transparent); background:var(--bg); color:var(--ink); width:180px; margin-top:10px; }
+  .scene { position:relative; width:210px; flex:none; border-radius:12px; overflow:hidden; }
+  .scene svg { display:block; width:100%; height:100%; }
+  .fx { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+  .fx span { position:absolute; top:-12px; font-size:11px; opacity:.85; animation:fall linear infinite; }
+  @keyframes fall { to { transform:translate(18px,200px) rotate(200deg); } }
+  .steam path { animation:steam 3.2s ease-in-out infinite; opacity:0; }
+  .steam path:nth-child(2) { animation-delay:1.1s; } .steam path:nth-child(3) { animation-delay:2.1s; }
+  @keyframes steam { 0% { opacity:0; transform:translateY(4px); } 40% { opacity:.55; } 100% { opacity:0; transform:translateY(-10px); } }
+  .twinkle { animation:tw 2.4s ease-in-out infinite; } .twinkle:nth-child(2n) { animation-delay:1.2s; }
+  @keyframes tw { 50% { opacity:.25; } }
+  @media (max-width:430px) { .card { flex-direction:column-reverse; padding:16px; } .scene { width:100%; height:120px; } .hi { font-size:24px; } }
+  @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="text">
+    <div class="hi" id="hi"></div>
+    <div class="date" id="date"></div>
+    <div class="year"><div class="bar"><i id="bar"></i></div><small id="yr"></small></div>
+    <button class="name" id="nameBtn" type="button"></button>
+  </div>
+  <div class="scene" aria-hidden="true">
+    <svg viewBox="0 0 210 176" preserveAspectRatio="xMidYMid slice" id="svg"></svg>
+    <div class="fx" id="fx"></div>
+  </div>
+</div>
+<script>
+const q = new URLSearchParams(location.search);
+document.body.dataset.theme = q.get('theme') || 'blush';
+const KEY = 'planner-name';
+const now = new Date(), h = now.getHours(), m = now.getMonth();
+const part = h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
+const hello = { morning:'Good morning', afternoon:'Good afternoon', evening:'Good evening', night:'Good night' }[part];
+const icon = { morning:'☀️', afternoon:'🌤', evening:'🌙', night:'✨' }[part];
+
+function render() {
+  const name = localStorage.getItem(KEY) || '';
+  document.getElementById('hi').innerHTML = name ? `${hello},<br><em>${esc(name)}</em> ${icon}` : `${hello} ${icon}`;
+  document.getElementById('nameBtn').textContent = name ? 'Change name' : '+ Add your name';
+}
+function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+document.getElementById('nameBtn').onclick = () => {
+  const b = document.getElementById('nameBtn');
+  const i = document.createElement('input'); i.placeholder = 'Your first name'; i.maxLength = 24; i.value = localStorage.getItem(KEY) || '';
+  b.replaceWith(i); i.focus();
+  const done = () => { const v = i.value.trim(); v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); i.replaceWith(b); render(); };
+  i.onkeydown = e => { if (e.key === 'Enter') done(); if (e.key === 'Escape') { i.replaceWith(b); } };
+  i.onblur = done;
+};
+document.getElementById('date').textContent = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+const start = new Date(now.getFullYear(), 0, 1), end = new Date(now.getFullYear() + 1, 0, 1);
+const day = Math.floor((now - start) / 864e5) + 1, total = Math.round((end - start) / 864e5);
+document.getElementById('bar').style.width = (day / total * 100).toFixed(1) + '%';
+document.getElementById('yr').textContent = `Day ${day} of ${total} · ${total - day} days left in ${now.getFullYear()}`;
+render();
+
+// scene
+const sky = { morning:['#ffe9d6','#fbd3dc'], afternoon:['#dcecfb','#f4f8fd'], evening:['#f6c6b9','#b9a3d6'], night:['#2b2f4d','#4a3f6b'] }[part];
+const night = part === 'night', lamp = part === 'evening' || night;
+const acc = getComputedStyle(document.body).getPropertyValue('--accent').trim();
+let s = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient>
+<radialGradient id="glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".75"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>
+<rect width="210" height="176" fill="url(#g)"/>`;
+if (night) s += [[30,26],[70,14],[120,30],[160,18],[185,40],[95,46],[50,52]].map(([x,y]) => `<circle class="twinkle" cx="${x}" cy="${y}" r="1.3" fill="#fff"/>`).join('') +
+  `<circle cx="160" cy="44" r="13" fill="#fdf3d8"/><circle cx="166" cy="40" r="12" fill="${sky[0]}"/>`;
+else s += `<circle cx="${part==='evening'?118:150}" cy="${part==='morning'?60:part==='evening'?80:42}" r="16" fill="${part==='evening'?'#f7a98b':'#ffd27a'}" opacity=".95"/>`;
+s += `<path d="M0 118 Q40 96 80 112 T160 104 T210 110 V176 H0Z" fill="${night?'#3b3557':'#f3dfe4'}" opacity=".8"/>
+<g fill="none" stroke="#fff" stroke-opacity=".9"><rect x="10" y="8" width="190" height="118" rx="8" stroke-width="5"/><path d="M105 8 V126 M10 66 H200" stroke-width="3"/></g>
+<rect x="0" y="128" width="210" height="48" fill="${night?'#2a2540':'#fbf5f2'}"/>
+<rect x="0" y="126" width="210" height="4" fill="${acc}" opacity=".35"/>`;
+// plant
+s += `<rect x="28" y="104" width="22" height="24" rx="4" fill="${acc}" opacity=".85"/>
+<path d="M39 104 C30 88 22 86 18 80 C30 80 36 90 39 100 C40 86 46 76 56 72 C54 84 46 92 40 104Z" fill="#8fb39a"/>`;
+// mug
+s += `<g class="steam" stroke="${night?'#cfc8e6':'#b9a9a6'}" stroke-width="1.6" fill="none" stroke-linecap="round">
+<path d="M98 96 c-4 -6 4 -9 0 -15"/><path d="M106 96 c-4 -6 4 -9 0 -15"/><path d="M114 96 c-4 -6 4 -9 0 -15"/></g>
+<rect x="92" y="100" width="28" height="28" rx="6" fill="#fff"/><path d="M120 106 h5 a6 6 0 0 1 0 12 h-5" stroke="#fff" stroke-width="4" fill="none"/>
+<rect x="92" y="108" width="28" height="4" fill="${acc}" opacity=".6"/>`;
+// lamp
+if (lamp) s += `<circle cx="170" cy="96" r="34" fill="url(#glow)"/>`;
+s += `<rect x="168" y="96" width="3" height="32" fill="#9c8f8c"/><path d="M156 96 L184 96 L178 78 L162 78Z" fill="${lamp?'#ffe3a3':'#efe4df'}"/><rect x="160" y="126" width="20" height="3" rx="1.5" fill="#9c8f8c"/>`;
+document.getElementById('svg').innerHTML = s;
+
+// seasonal particles
+const fx = document.getElementById('fx');
+const sym = m === 11 || m <= 1 ? '❄' : m <= 4 ? '🌸' : m <= 7 ? '✦' : '🍂';
+for (let i = 0; i < 9; i++) {
+  const e = document.createElement('span'); e.textContent = sym;
+  e.style.left = (Math.random() * 100) + '%'; e.style.animationDuration = (6 + Math.random() * 6) + 's';
+  e.style.animationDelay = (-Math.random() * 10) + 's'; e.style.fontSize = (8 + Math.random() * 6) + 'px';
+  if (sym === '❄') e.style.color = night ? '#fff' : '#c9d6e8'; if (sym === '✦') e.style.color = acc;
+  fx.appendChild(e);
+}
+</script>
+</body>
+</html>
