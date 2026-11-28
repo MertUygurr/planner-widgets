@@ -20,7 +20,7 @@
   .head h1 em { color:var(--accent); }
   .nav button { font:inherit; border:0; background:none; color:var(--muted); cursor:pointer; padding:2px 8px; border-radius:6px; font-size:14px; }
   .nav button:hover { background:var(--soft); color:var(--ink); }
-  .grid { display:grid; grid-template-columns:26px repeat(31,1fr); gap:3px; max-width:760px; }
+  .grid { display:grid; grid-template-columns:26px repeat(31,1fr); gap:3px; max-width:760px; justify-content:start; }
   .ml { color:var(--muted); font-size:10px; line-height:1; align-self:center; }
   .dn { text-align:center; color:var(--muted); font-size:9px; padding-bottom:1px; }
     .px { aspect-ratio:1; width:100%; min-width:0; border-radius:3px; background:var(--empty); border:0; padding:0; cursor:pointer; transition:transform 120ms var(--ease); }
@@ -72,7 +72,18 @@ function draw() {
   grid.innerHTML = h;
   const counts = MOODS.map((_, i) => Object.values(data).filter(v => v === i).length);
   document.getElementById('legend').innerHTML = MOODS.map(([n,c],i) => `<span><i style="background:var(${c})"></i>${n}${counts[i]?' · '+counts[i]:''}</span>`).join('');
+  fit();
 }
+function fit() {
+  // fit 31 columns x 12 rows inside the embed (Notion default is 320px tall)
+  const head = document.querySelector('.head').offsetHeight + 8, leg = document.getElementById('legend').offsetHeight + 10;
+  const byW = (innerWidth - 16 - 26 - 31 * 3) / 31, byH = (innerHeight - 12 - head - leg - 14 - 12 * 3) / 12;
+  const c = Math.max(8, Math.floor(Math.min(byW, byH, 22)));
+  grid.style.gridTemplateColumns = `26px repeat(31, ${c}px)`;
+  const w = (26 + 31 * (c + 3)) + 'px';
+  grid.style.maxWidth = w; document.querySelector('.head').style.maxWidth = w; document.getElementById('legend').style.maxWidth = w;
+}
+addEventListener('resize', fit);
 let pick;
 grid.onclick = e => {
   const b = e.target.closest('.px'); if (!b || b.disabled || b.classList.contains('no')) return;
